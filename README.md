@@ -14,6 +14,8 @@ Simply open https://bwaldon.github.io/vague-contracts/index.html in a compatible
 
 `$("#question").html('<i>1. Do you think that the damage was caused by ' + this.item + '?</i>');`
 
+Finally, note that you can put all of the text of your vignette inside `header`, or split the text between `header` and `continuation`. The output is virtually identical. 
+
 2. After creating your own stimuli (maybe just one suffices for the purposes of a live demo), you can run the R script (`csvtojson.r`) to convert the .csv file into .json. (If you're not familiar with R, it should be trivial to use another programming language - e.g. Python - to accomplish the same task). This output is saved as `stimuli.json`. 
 
 3. The contents of `stimuli.json` need to be copy and pasted into `js/stimuli.js`, such that `js/stimuli.js` should read as follows: 
