@@ -1,4 +1,4 @@
-# An experimental template for assessing lay interpretation of vague contract language 
+# An experimental template for assessing interpretation of vague contract language 
 
 This repository contains example code for creating experiments modeled after those reported by Lawrence Solan, Terri Rosenblatt and Daniel Osherson in their 2012 paper *False Consensus Bias in Contract Interpretation* (available at https://brooklynworks.brooklaw.edu/faculty/276/). 
 
