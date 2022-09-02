@@ -4,7 +4,7 @@ This repository contains example code for creating experiments modeled after tho
 
 ## To demo the experiment 
 
-Simply open https://bwaldon.github.io/vague-contracts/index.html in a compatible browser. (Chrome works best). 
+Simply open https://codexstanford.github.io/vague-contracts/index.html in a compatible browser. (Chrome works best). 
 
 ## To modify the experiment stimuli and run your own experiments:
 
