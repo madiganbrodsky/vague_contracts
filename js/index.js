@@ -35,7 +35,7 @@ function make_slides(f) {
   slides.trial = slide({
     name : "trial",
     present: exp.all_stims,
- 
+
     // PRESENT THE SLIDE
     present_handle: function(stim) {
       this.trial_start = new Date();
@@ -46,7 +46,7 @@ function make_slides(f) {
       this.continuation = stim.continuation;
 
       $("#vignette").html(this.header + "<p>" + this.continuation);
-      $("#question").html('<i>1. Do you think that the damage was caused by ' + this.item + '?</i>');
+      $("#question").html('<i>1. Do you think that the damage was pertains to ' + this.item + '?</i>');
       $("#error_percept").hide();
       $("#error_num").hide();
       // $("textarea").val("");
@@ -67,7 +67,7 @@ function make_slides(f) {
    //      //$("#number_guess").html(Math.round(ui.value*N));
    //    });
    //  },
-    
+
 
     // CHECK THAT THEY MOVED ALL SLIDERS
     button_percept : function() {
@@ -79,7 +79,7 @@ function make_slides(f) {
       $("#error_percept").show();
       if(!(between0and100(this.population_judgment))){
         $("#error_num").show();
-      } 
+      }
     } else {
       $("#error_percept").hide();
       this.log_responses();
@@ -173,7 +173,7 @@ function init() {
   exp.all_stims = [_.sample(stimuli)];
 
   console.log(exp.all_stims);
- 
+
   exp.system = {
       Browser : BrowserDetect.browser,
       OS : BrowserDetect.OS,
@@ -208,7 +208,7 @@ function init() {
   $("#audio_player").bind("ended", function () {
         // if (! $("#attention_check").data("dont-show")) {
           // $("#attention_check").show();
-          
+
         // }
         $("#audio_player").data("num-plays", $("#audio_player").data("num-plays") + 1);
 
