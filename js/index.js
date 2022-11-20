@@ -165,7 +165,7 @@ function init() {
 
   exp.data_trials = [];
 
-   //can randomize between subject conditions here
+  //  can randomize between subject conditions here
   // var stimlist = _.filter(stimuli, function(stim) {
   //   return stim.list == condition
   // })
