@@ -1,3 +1,7 @@
+const queryString = window.location.search;
+const urlParams = new URLSearchParams(queryString);
+const demoMode = !(urlParams.get('demoMode') == undefined)
+
 var between0and100 = function (input)
 {
     try
@@ -44,11 +48,18 @@ function make_slides(f) {
       this.version = stim.version;
       this.header = stim.header;
       this.continuation = stim.continuation;
+      this.title = stim.Title;
 
       $("#vignette").html(this.header + "<p>" + this.continuation);
-      $("#question").html('<i>1. Do you think that the damage was pertains to ' + this.item + '?</i>');
+      $("#question").html('<i>1. Do you think that the damage pertains to ' + this.item + '?</i>');
       $("#error_percept").hide();
       $("#error_num").hide();
+      if(!demoMode) {
+        $("#demoView").hide();
+      } else {
+        $("#demoName").html("<b>Item name</b>: " + stim.Title);
+        $("#demoCondition").html("<b>Item condition</b>: " + this.version);
+      }
       // $("textarea").val("");
       // $("#firstpart").hide();
       // $("#attention_check").data("dont-show", true);
@@ -56,18 +67,9 @@ function make_slides(f) {
 
     },
 
-
-   // init_sliders : function() {
-   //    utils.make_slider("#accent_slider", function(event, ui) {
-   //      exp.sliderPost_accent = ui.value;
-   //      //$("#number_guess").html(Math.round(ui.value*N));
-   //    });
-   //    utils.make_slider("#understand_slider", function(event, ui) {
-   //      exp.sliderPost_understand = ui.value;
-   //      //$("#number_guess").html(Math.round(ui.value*N));
-   //    });
-   //  },
-
+    button_demo : function() {
+      _stream.apply(this);
+    },
 
     // CHECK THAT THEY MOVED ALL SLIDERS
     button_percept : function() {
@@ -94,6 +96,7 @@ function make_slides(f) {
           "population_judgment" : this.population_judgment,
           "confidence" : this.confidence,
           "item" : this.item,
+          "title" : this.title,
           "version" : this.version,
           "header" : this.header,
           "continuation" : this.continuation,
@@ -113,14 +116,6 @@ slides.subj_info =  slide({
         $("#error_emptyid").show();
       } else {
       exp.participant_id = $("#participant_id").val();
-      // var raceData = new Array();
-      // var raceQs = document.getElementById("checkboxes");
-      // var chks = raceQs.getElementsByTagName("INPUT");
-      // for (var i = 0; i < chks.length; i++) {
-      //   if (chks[i].checked) {
-      //     raceData.push(chks[i].value);
-      //   }
-      // };
       exp.subj_data = {
         language : $("#language").val(),
         enjoyment : $("#enjoyment").val(),
@@ -170,7 +165,9 @@ function init() {
   //   return stim.list == condition
   // })
 
-  exp.all_stims = [_.sample(stimuli)];
+  stims = demoMode ? stimuli : [_.sample(stimuli)]
+
+  exp.all_stims = stims;
 
   console.log(exp.all_stims);
 
