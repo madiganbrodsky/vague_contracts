@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>Vague interpretation demo</title>
+    <title>Insurance policy experiment</title>
 
     <!--JS-->
 
@@ -49,7 +49,7 @@
 
     <!-- <p id="cocolab">Stanford ALPS Lab</p> -->
     <p id="instruct-text">
-      In this study, we are interested in how you interpret language in insurance policies, as well as your beliefs about how others will interpret insurance policies. You'll read one short passage and answer a few questions about it. We estimate that the study will take about 5-10 minutes to complete. Thanks for participating!  
+      In this study, we are interested in how you interpret language in insurance policies, as well as your beliefs about how others will interpret insurance policies. You'll read one short passage and answer a few questions about it. Thanks for participating!  
     </p>
     <button id="start_button" type="button">Start Experiment</button>
     <br><br><br>
@@ -69,55 +69,56 @@
   <div class="slide" id="trial">
     <br>
 
-    <div id="perception"> 
-      <!-- <p id="speakerutt">{{}}</p>
-      <p id="exchange">{{}}</p> -->
-      <p>
-      <div id="vignette" style = "text-align: justify; font-family: Arial, Helvetica, sans-serif;background-color: #faeeca;padding:10px;border: 5px solid gray;"></div>
+      <div id="demoView" style = "text-align: justify; font-family: Arial, Helvetica, sans-serif;">
+        <font color = "red"><b>DEMO VIEW</b></font> <br>
+        <div id = "demoName"></div>
+        <div id = "demoCondition"></div>
+        <button id="demoNextButton" onclick="_s.button_demo()">Next stim</button>
+      </div>
+
+      <br>
+
+      <div id="vignette" style = "text-align: justify; font-family: Arial, Helvetica, sans-serif;background-color: #faeeca;padding:10px;border: 5px solid gray;">
+      </div>
 
       <hr>
 
-      <i><div id="question1" style = "float: left;display:inline;"><div id = "question" style = "text-align:left;display:inline;"></div></i><label><input type="radio"  name="individual_judgment" value="yes"/>Yes</label>
-      <label><input type="radio"  name="individual_judgment" value="no"/>No</label>
-      <label><input type="radio"  name="individual_judgment" value="cantdecide"/>Can't decide</label></div><p>
-     
+      <i><div id="question1" style = "float: left;">
+      <div id = "question" style = "text-align:left;"></div></i> 
+      </div><p>
 
+      <center>
+      <br>
+      <label><input type="radio"  name="individual_judgment" value="yes"/>Yes</label>
+      <label><input type="radio"  name="individual_judgment" value="no"/>No</label>
+      <label><input type="radio"  name="individual_judgment" value="cantdecide"/>Can't decide</label>
+      </center>
+     
       <i><div id="question2" style = "float: left; text-align: left"><p>2. You are one of 100 people who have volunteered to answer these questions. How many of the 100 do you think will agree with your answer to question (1)? <input type="text" id="population_judgment" name="population_judgment" size=3></div></i><p>
 
-       <p id="error_num" style = "color:red">Please provide a number between 0 and 100.</p>
+      <p id="error_num" style = "color:red">Please provide a number between 0 and 100.</p>
 
-      <i><div id="question2" style = "text-align: left">3. How confident are you in your answer to question (1)?</i>  <select id="confidence">
+      <i><div id="question3" style = "float: left; text-align: left">3. How confident are you in your answer to question (1)?</i>  
+      <select id="confidence">
       <label><option value="-1"/></label>
       <label><option value="0"/>Not at all Confident</label>
       <label><option value="1"/>Slightly Confident</label>
       <label><option value="2"/>Moderately Confident</label>
       <label><option value="3"/>Very Confident</label>
       <label><option value="4"/>Totally Confident</label>
-    </select></div>
-  
-    <p>
+    </select>
+    </div>
 
-<!--     <table id="slider_table" class="slider_table">
-      <tr><td class="left"><h3>no accent at all</h3></td><td colspan="2"><div id="accent_slider" class="slider"></div></td><td class="right" id="numObjects"><h3>heavy accent</h3></td></tr>
-      <tr></tr>
-      <tr><td class="left"><h3>easy to understand</h3></td><td colspan="2"><div id="understand_slider" class="slider"></div></td><td class="right" id="numObjects"><h3>difficult to understand</h3></td></tr>
-      <tr></tr>
-    </table> -->
-
-
+    <p id="error_percept" style = "color:red"><br><br>Please answer all questions before proceeding.</p>
+    <div id = "placeholder" style = "color:white">.</div>
     <p><button id="done_percept" onclick="_s.button_percept()">Continue</button></p>
-    <p id="error_percept" style = "color:red">Please answer all questions before proceeding.</p>
+
   </div>
-</div>
 
     <div class="slide"  id="subj_info">
   <div class="long_form">
 <p><p>
     <div class="subj_info_title">Additional information</div>
-
-      <label for="participant_id"><u><b>Please provide your Stanford ID below (required):</b></u></label><br>
-      <input type="text" id="participant_id" name="participant_id">
-      <p hidden id="error_emptyid" style = "color:red"><b>You must provide your ID before continuing.</b></p><p>
 
     <p>Answering the following questions is optional, but will help us understand your responses in the study.</p><p>
     
@@ -146,7 +147,7 @@
 
     <p>Age: <input type="text" id="age"/></p>
 
-<!--     <div id="checkboxes">
+    <div id="checkboxes">
     <p>What is your Race/Ethnicity? Select all that apply:</p>
     <ul style="list-style-type:none;" style="display: inline-block;" align="center">  
       <li><label><input name="raceX" type="checkbox" id="Asian"  
@@ -171,9 +172,9 @@
       <label><option value="3"/>Graduated College</label>
       <label><option value="4"/>Hold a higher degree</label>
     </select>
-    </p> -->
+    </p>
 
-<!--     <p>Which of the following options do you feel your political beliefs most closely align with?</p>
+    <p>Which of the following options do you feel your political beliefs most closely align with?</p>
     <select id="affiliation">
     <label><option value="-1"/></label>
     <label><option value="0"/>Liberal Democrat (most liberal)</label>
@@ -183,7 +184,7 @@
     <label><option value="4"/>Moderate Republican</label>
     <label><option value="5"/>Republican-leaning Independent</label>
     <label><option value="6"/>Conservative Republican (most conservative)</label>
-    <select> -->
+    <select>
     <p>Did you enjoy the experiment?</p>
     <select id="enjoyment">
     <label><option value="-1"></option></label>

@@ -1,3 +1,7 @@
+const queryString = window.location.search;
+const urlParams = new URLSearchParams(queryString);
+const demoMode = !(urlParams.get('demoMode') == undefined)
+
 var between0and100 = function (input)
 {
     try
@@ -44,48 +48,48 @@ function make_slides(f) {
       this.version = stim.version;
       this.header = stim.header;
       this.continuation = stim.continuation;
+      this.title = stim.Title;
 
       $("#vignette").html(this.header + "<p>" + this.continuation);
-      $("#question").html('<i>1. Do you think that the damage counts under ' + this.item + ' as it appears in the policy? </i>'); // given just your understanding, of X do you think that the damage described is covered under the policy?
+      $("#question").html('<i>1. Do you think that the damage pertains to ' + this.item + '?</i>');
       $("#error_percept").hide();
       $("#error_num").hide();
-      // $("textarea").val("");
-      // $("#firstpart").hide();
-      // $("#attention_check").data("dont-show", true);
-      // this.init_sliders();
+      if(!demoMode) {
+        $("#demoView").hide();
+      } else {
+        $("#demoName").html("<b>Item name</b>: " + stim.Title);
+        $("#demoCondition").html("<b>Item condition</b>: " + this.version);
+      }
 
     },
 
-
-   // init_sliders : function() {
-   //    utils.make_slider("#accent_slider", function(event, ui) {
-   //      exp.sliderPost_accent = ui.value;
-   //      //$("#number_guess").html(Math.round(ui.value*N));
-   //    });
-   //    utils.make_slider("#understand_slider", function(event, ui) {
-   //      exp.sliderPost_understand = ui.value;
-   //      //$("#number_guess").html(Math.round(ui.value*N));
-   //    });
-   //  },
-
+    button_demo : function() {
+      _stream.apply(this);
+    },
 
     // CHECK THAT THEY MOVED ALL SLIDERS
     button_percept : function() {
     this.individual_judgment = $('input[name="individual_judgment"]:checked').val()
     this.population_judgment = $("#population_judgment").val()
     this.confidence = $("#confidence").val()
-    if (this.individual_judgment === undefined || $("#confidence").val() == -1 || this.population_judgment === undefined) {
-      $("#error_num").hide();
+    verifyPopJudgment = between0and100(this.population_judgment)
+    questions1or3NotAnswered = (this.individual_judgment === undefined || $("#confidence").val() == -1)
+    if(!verifyPopJudgment && questions1or3NotAnswered) {
+      $("#error_num").show();
+      $("#placeholder").hide();
       $("#error_percept").show();
-      if(!(between0and100(this.population_judgment))){
-        $("#error_num").show();
-      }
-    } else {
+    } else if (!verifyPopJudgment) {
+      $("#error_num").show();
+      $("#placeholder").show();
       $("#error_percept").hide();
+    } else {
+      $("#error_num").hide();
+      $("#error_percept").hide();
+      $("#placeholder").show();
       this.log_responses();
       _stream.apply(this);
-      }
-    },
+    }
+  },
 
     log_responses : function() {
 
@@ -94,6 +98,7 @@ function make_slides(f) {
           "population_judgment" : this.population_judgment,
           "confidence" : this.confidence,
           "item" : this.item,
+          "title" : this.title,
           "version" : this.version,
           "header" : this.header,
           "continuation" : this.continuation,
@@ -113,22 +118,14 @@ slides.subj_info =  slide({
         $("#error_emptyid").show();
       } else {
       exp.participant_id = $("#participant_id").val();
-      // var raceData = new Array();
-      // var raceQs = document.getElementById("checkboxes");
-      // var chks = raceQs.getElementsByTagName("INPUT");
-      // for (var i = 0; i < chks.length; i++) {
-      //   if (chks[i].checked) {
-      //     raceData.push(chks[i].value);
-      //   }
-      // };
       exp.subj_data = {
         language : $("#language").val(),
         enjoyment : $("#enjoyment").val(),
         asses : $('input[name="assess"]:checked').val(),
         age : $("#age").val(),
         gender : $("#gender").val(),
-        // education : $("#education").val(),
-        // affiliation : $("#affiliation").val(),
+        education : $("#education").val(),
+        affiliation : $("#affiliation").val(),
         // race : raceData.join(", "),
         comments : $("#comments").val(),
         problems: $("#problems").val(),
@@ -170,7 +167,9 @@ function init() {
   //   return stim.list == condition
   // })
 
-  exp.all_stims = [_.sample(stimuli)];
+  stims = demoMode ? stimuli : [_.sample(stimuli)]
+
+  exp.all_stims = stims;
 
   console.log(exp.all_stims);
 
