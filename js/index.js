@@ -46,7 +46,7 @@ function make_slides(f) {
       this.continuation = stim.continuation;
 
       $("#vignette").html(this.header + "<p>" + this.continuation);
-      $("#question").html('<i>1. Do you think that the damage was pertains to ' + this.item + '?</i>');
+      $("#question").html('<i>1. Do you think that the damage counts under ' + this.item + ' as it appears in the policy? </i>'); // given just your understanding, of X do you think that the damage described is covered under the policy?
       $("#error_percept").hide();
       $("#error_num").hide();
       // $("textarea").val("");
