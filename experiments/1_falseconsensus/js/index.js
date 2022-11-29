@@ -60,10 +60,6 @@ function make_slides(f) {
         $("#demoName").html("<b>Item name</b>: " + stim.Title);
         $("#demoCondition").html("<b>Item condition</b>: " + this.version);
       }
-      // $("textarea").val("");
-      // $("#firstpart").hide();
-      // $("#attention_check").data("dont-show", true);
-      // this.init_sliders();
 
     },
 
@@ -76,18 +72,24 @@ function make_slides(f) {
     this.individual_judgment = $('input[name="individual_judgment"]:checked').val()
     this.population_judgment = $("#population_judgment").val()
     this.confidence = $("#confidence").val()
-    if (this.individual_judgment === undefined || $("#confidence").val() == -1 || this.population_judgment === undefined) {
-      $("#error_num").hide();
+    verifyPopJudgment = between0and100(this.population_judgment)
+    questions1or3NotAnswered = (this.individual_judgment === undefined || $("#confidence").val() == -1)
+    if(!verifyPopJudgment && questions1or3NotAnswered) {
+      $("#error_num").show();
+      $("#placeholder").hide();
       $("#error_percept").show();
-      if(!(between0and100(this.population_judgment))){
-        $("#error_num").show();
-      }
-    } else {
+    } else if (!verifyPopJudgment) {
+      $("#error_num").show();
+      $("#placeholder").show();
       $("#error_percept").hide();
+    } else {
+      $("#error_num").hide();
+      $("#error_percept").hide();
+      $("#placeholder").show();
       this.log_responses();
       _stream.apply(this);
-      }
-    },
+    }
+  },
 
     log_responses : function() {
 
@@ -122,8 +124,8 @@ slides.subj_info =  slide({
         asses : $('input[name="assess"]:checked').val(),
         age : $("#age").val(),
         gender : $("#gender").val(),
-        // education : $("#education").val(),
-        // affiliation : $("#affiliation").val(),
+        education : $("#education").val(),
+        affiliation : $("#affiliation").val(),
         // race : raceData.join(", "),
         comments : $("#comments").val(),
         problems: $("#problems").val(),
