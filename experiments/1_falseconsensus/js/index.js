@@ -117,6 +117,15 @@ function make_slides(f) {
 slides.subj_info =  slide({
     name : "subj_info",
     button_submit : function(e){
+      var raceData = new Array();
+      var raceQs = document.getElementById("checkboxes");
+      var chks = raceQs.getElementsByTagName("INPUT");
+      for (var i = 0; i < chks.length; i++) {
+        if (chks[i].checked) {
+          raceData.push(chks[i].value);
+        }
+      };
+      
       if ($("#participant_id").val() == 0) {
         $("#error_emptyid").show();
       } else {
@@ -129,7 +138,8 @@ slides.subj_info =  slide({
         gender : $("#gender").val(),
         education : $("#education").val(),
         affiliation : $("#affiliation").val(),
-        // race : raceData.join(", "),
+        race : raceData.join(", "),
+        legaltraining : $("#legaltraining").val(),
         comments : $("#comments").val(),
         problems: $("#problems").val(),
         fairprice: $("#fairprice").val()
