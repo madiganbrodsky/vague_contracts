@@ -49,7 +49,7 @@
 
     <!-- <p id="cocolab">Stanford ALPS Lab</p> -->
     <p id="instruct-text">
-      In this study, we are interested in how you interpret language in insurance policies, as well as your beliefs about how others will interpret insurance policies. You'll read one short passage and answer a few questions about it. Thanks for participating!  
+      In this study, we are interested in how you interpret language in insurance policies, as well as your beliefs about how others will interpret insurance policies. You'll read three short passages and answer a few questions about each. Thanks for participating!  
     </p>
     <button id="start_button" type="button">Start Experiment</button>
     <br><br><br>
@@ -83,9 +83,17 @@
 
       <hr>
 
+      <table style="font-size: 18px;">
+
+      <tr>
+
+      <td>
+
       <i><div id="question1" style = "float: left;">
       <div id = "question" style = "text-align:left;"></div></i> 
-      </div><p>
+      </div>
+
+      <br>
 
       <center>
       <br>
@@ -93,11 +101,22 @@
       <label><input type="radio"  name="individual_judgment" value="no"/>No</label>
       <label><input type="radio"  name="individual_judgment" value="cantdecide"/>Can't decide</label>
       </center>
+    </td>
+    </tr>
+
+
+      <tr>
+      <td>
      
-      <i><div id="question2" style = "float: left; text-align: left"><p>2. You are one of 100 people who have volunteered to answer these questions. How many of the 100 do you think will agree with your answer to question (1)? <input type="text" id="population_judgment" name="population_judgment" size=3></div></i><p>
+      <i><div id="question2" style = "float: left; text-align: left"><p>2. You are one of 100 people who have volunteered to answer these questions. How many of the 100 do you think will agree with your answer to question (1)? <input type="text" id="population_judgment" name="population_judgment" size=3></div></i>
+      <center>
+      <p id="error_num" style = "color:red">Please provide a number between 0 and 100.<br><br></p>
+      </center>
+      </td>
+      </tr>
 
-      <p id="error_num" style = "color:red">Please provide a number between 0 and 100.</p>
-
+    <tr>
+      <td>
       <i><div id="question3" style = "float: left; text-align: left">3. How confident are you in your answer to question (1)?</i>  
       <select id="confidence">
       <label><option value="-1"/></label>
@@ -108,10 +127,27 @@
       <label><option value="4"/>Totally Confident</label>
     </select>
     </div>
+    </td>
+    </tr>
 
-    <p id="error_percept" style = "color:red"><br><br>Please answer all questions before proceeding.</p>
-    <div id = "placeholder" style = "color:white">.</div>
-    <p><button id="done_percept" onclick="_s.button_percept()">Continue</button></p>
+    <tr>
+    <td>
+    <center>
+    <p id="error_percept" style = "color:red"><br>Please answer all questions before proceeding.</p>
+    </center>
+    </td>
+    </tr>
+
+    <tr>
+    <td>
+    <center>
+    <br>
+    <button id="done_percept" onclick="_s.button_percept()">Continue</button>
+    </center>
+    </td>
+    </tr>
+
+    </table>
 
   </div>
 

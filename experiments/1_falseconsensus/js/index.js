@@ -76,16 +76,16 @@ function make_slides(f) {
     questions1or3NotAnswered = (this.individual_judgment === undefined || $("#confidence").val() == -1)
     if(!verifyPopJudgment && questions1or3NotAnswered) {
       $("#error_num").show();
-      $("#placeholder").hide();
       $("#error_percept").show();
     } else if (!verifyPopJudgment) {
       $("#error_num").show();
-      $("#placeholder").show();
       $("#error_percept").hide();
+    } else if (questions1or3NotAnswered) {
+      $("#error_num").hide();
+      $("#error_percept").show();
     } else {
       $("#error_num").hide();
       $("#error_percept").hide();
-      $("#placeholder").show();
       this.log_responses();
       _stream.apply(this);
     }
@@ -157,21 +157,24 @@ slides.subj_info =  slide({
 
 /// init ///
 function init() {
-  // var condition = _.sample(["List1","List2"]);
-  // var condition = _.sample(["List1"]);
 
   exp.data_trials = [];
 
-  //  can randomize between subject conditions here
-  // var stimlist = _.filter(stimuli, function(stim) {
-  //   return stim.list == condition
-  // })
+  unambiguous_covered_stim = _.sample(_.filter(stimuli, function(stim) {
+    return stim.version == "unambiguous_covered"
+  }))
 
-  stims = demoMode ? stimuli : [_.sample(stimuli)]
+  unambiguous_uncovered_stim = _.sample(_.filter(stimuli, function(stim) {
+    return stim.version == "unambiguous_uncovered" && stim.Title != unambiguous_covered_stim.Title
+  }))
+
+  controversial_stim = _.sample(_.filter(stimuli, function(stim) {
+    return stim.version == "controversial" && stim.Title != unambiguous_covered_stim.Title && stim.Title != unambiguous_uncovered_stim.Title
+  }))
+
+  stims = demoMode ? stimuli : _.shuffle([unambiguous_covered_stim, unambiguous_uncovered_stim, controversial_stim])
 
   exp.all_stims = stims;
-
-  console.log(exp.all_stims);
 
   exp.system = {
       Browser : BrowserDetect.browser,
@@ -191,8 +194,6 @@ function init() {
                     //relies on structure and slides being defined
 
   $('.slide').hide(); //hide everything
-
-
 
   //make sure turkers have accepted HIT (or you're not in mturk)
   $("#start_button").click(function() {
