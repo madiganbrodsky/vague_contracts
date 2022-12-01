@@ -158,8 +158,19 @@
 
     <p>Answering the following questions is optional, but will help us understand your responses in the study.</p><p>
     
-    Native Language: <input type="text" id="language"/><br>
+    Native language: <input type="text" id="language"/><br>
     <label>(the language(s) spoken at home when you were a child)</label>
+
+    
+    <p>What best describes your legal background?
+    <select id="legaltraining">
+      <label><option value="-1"/></label>
+      <label><option value="0"/>No formal legal training and/or law school</label>
+      <label><option value="1"/>Some formal legal training and/or law school</label>
+      <label><option value="2"/>Professional legal degree (such as a JD or LLM)</label>
+      <label><option value="3"/>Practicing lawyer</label>
+    </select>
+    </p>
 
     <p>Did you read the instructions and do you think you did the experiment correctly?</br>
     <label><input type="radio"  name="assess" value="No"/>No</label>
@@ -184,7 +195,7 @@
     <p>Age: <input type="text" id="age"/></p>
 
     <div id="checkboxes">
-    <p>What is your Race/Ethnicity? Select all that apply:</p>
+    <p>What is your race/ethnicity? Select all that apply:</p>
     <ul style="list-style-type:none;" style="display: inline-block;" align="center">  
       <li><label><input name="raceX" type="checkbox" id="Asian"  
       value="Asian"/>Asian</label></li>
@@ -199,7 +210,7 @@
     </ul>
     </div>
 
-    <p>Level Of Education:
+     <p>Level Of Education:
     <select id="education">
       <label><option value="-1"/></label>
       <label><option value="0"/>Some High School</label>
