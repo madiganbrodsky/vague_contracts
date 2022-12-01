@@ -21,7 +21,7 @@ turk = turk || {};
       for (var i = 0; i < len; i++) {
         if (i in this)
           res[i] = fun.call(thisp, this[i], i, this);
-   		}
+      }
       return res;
     };
   }
