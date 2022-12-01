@@ -1,98 +1,92 @@
 library(tidyverse)
 library(jsonlite)
+library(Hmisc)
 library(binom)
 library(brms)
+library(EnvStats)
 
-## for bootstrapping 95% confidence intervals
-library(bootstrap)
-theta <- function(x,xdata,na.rm=T) {mean(xdata[x],na.rm=na.rm)}
-ci.low <- function(x,na.rm=T) {
-  mean(x,na.rm=na.rm) - quantile(bootstrap(1:length(x),1000,theta,x,na.rm=na.rm)$thetastar,.025,na.rm=na.rm)}
-ci.high <- function(x,na.rm=T) {
-  quantile(bootstrap(1:length(x),1000,theta,x,na.rm=na.rm)$thetastar,.975,na.rm=na.rm) - mean(x,na.rm=na.rm)}
-
-base = 6
-expand = 4
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-d_subj <- read_csv("../../../results/pilots/pollution/pollution-subject_information.csv") %>%
-  select(workerid, attention, language, gender,comments)
+d <- read_csv("../../results/1_falseconsensus/demo-merged.csv")
 
-d_data <- read_csv("../../../results/pilots/pollution/pollution-trials.csv") %>%
-  filter(!is.na(item)) %>%
-  mutate(population_judgment = as.numeric(population_judgment))
+# EXCLUSIONS
 
-d <- d_subj %>%
-  bind_cols(d_data) %>%
-  mutate(workerid = workerid...1) %>%
-  filter(attention == TRUE) %>%
-  distinct(workerid, .keep_all = TRUE) %>%
-  mutate(version = factor(version))
+excludedWorkers <- (d %>%
+                      filter((version == "unambiguous_uncovered" & individual_judgment == "yes") |
+                               (version == "unambgiuous_covered" & individual_judgment == "no")) %>%
+                      group_by(workerid) %>%
+                      summarise(n = n()) %>%
+                      filter(n > 1))$workerid
 
-levels(d$version) <- c("Exclusion", "Inclusion")
+d <- d %>% 
+  filter(!(workerid %in% excludedWorkers))
 
-d %>%
-  group_by(gender,version) %>%
-  summarize(n = n())
+# DATA TRANSFORMATIONS
 
-d %>%
-  group_by(prompt) %>%
-  summarize(n = n())
+transformed <- d %>%
+  select(workerid,title,version,individual_judgment,population_judgment,confidence) %>%
+  group_by(version,title) %>%
+  mutate(total = n()) %>%
+  ungroup() %>%
+  group_by(version,title,individual_judgment) %>%
+  mutate(count = n()) %>%
+  mutate(true_proportion = binom.confint(x = count, n  = total, methods = "exact")$mean * 100, 
+         ci_low = binom.confint(x = count, n  = total, methods = "exact")$lower * 100,
+         ci_high = binom.confint(x = count, n  = total, methods = "exact")$upper * 100) %>%
+  mutate(difference = as.numeric(population_judgment) - true_proportion)
 
-d %>%
-  group_by(version, gender, individual_judgment) %>%
-  summarise(n = n()) %>%
-  mutate(freq = n / sum(n))
+# PLOT (BY-ITEM, BY-CONDITION)
 
-transformed_gender_version <- d %>%
-  group_by(prompt,gender,version) %>%
-  # filter(gender %in% c("Male", "Female")) %>%
-  summarize(mean = mean(population_judgment), YMin = mean - ci.low(population_judgment),
-            YMax = mean + ci.high(population_judgment), n = n()) 
-
-transformed_gender_version %>% 
-  ggplot(aes (x = prompt, y = mean, fill = prompt)) +
-  facet_grid(version~gender) +
-  geom_bar(stat="identity",position = "dodge") +
+transformed %>% 
+  ggplot(aes(x = individual_judgment, y = as.numeric(population_judgment))) +
+  facet_wrap(version ~ title) +
+  geom_point(alpha = 0.5, show.legend = FALSE, aes(colour = individual_judgment),
+             position = position_nudge(x = +0.1)) +
   theme_bw() +
-  theme(text = element_text(size = base * expand / 2, face = "bold"),
-        legend.position = "none") +
-  geom_errorbar(aes(ymin=YMin,ymax=YMax),size = 0.25,width= 0.025,position = "dodge") +  
-  labs(fill = "Prime type") +
-  ylab("Mean population\nconsensus estimate") +
-  xlab("Prompt type") +
-  scale_x_discrete(labels=c("1000_control" = "Control", "1000_days" = "'Days'",
-                            "1000_gender" = "Gender")) +
-  ggtitle("Consensus estimates, Solan et al's 'pollution' vignette") +
-  geom_label(aes(label = paste("n = ",n)),size = 2)
+  stat_summary(fun.data = mean_cl_boot, geom = "errorbar", width = 0.1, colour = "red",
+               position = position_nudge(x = +0.1)) + 
+  stat_summary(fun = mean, shape = 18, size = 1, geom = "point", colour = "red",
+               position = position_nudge(x = +0.1)) +
+  stat_summary(fun=mean, geom="label", aes(label = round(..y..,2), hjust = -0.25),
+               position = position_nudge(x = +0.1)) +
+  geom_errorbar(aes(ymin=ci_low, ymax=ci_high),
+                width=.1,                    # Width of the error bars
+                position=position_nudge(-0.1)) +
+  geom_point(aes(y = true_proportion), shape = 18, size = 3, 
+             position = position_nudge(-0.1)) +
+  geom_text(aes(y = true_proportion, label = round(true_proportion, digits = 2)),
+            position=position_nudge(-0.25)) +
+  ylab("Distribution of responses (and estimates), %") +
+  xlab("Individual judgment") +
+  ggtitle("Comparing real vs. estimated consensus")
 
-ggsave("pilot_results_pollution_genderVersion.pdf", width = 6, height = 3, units = "in")
+# FISHER ONE-SAMPLE TEST TO DETERMINE WHETHER (SUBJECTIVE JUDGMENT) - (TRUE PROPORTION) > 0
 
-transformed_ag <- d %>%
-  group_by(prompt) %>%
-  summarize(mean = mean(population_judgment), YMin = mean - ci.low(population_judgment),
-            YMax = mean + ci.high(population_judgment), n = n()) 
+fisherTest <- oneSamplePermutationTest((transformed %>% filter(version == "controversial"))$difference, 
+                                       alternative = "greater", mu = 0, exact = FALSE, 
+                         n.permutations = 10000, seed = NULL)
 
-transformed_ag %>% 
-  ggplot(aes (x = prompt, y = mean, fill = prompt)) +
-  geom_bar(stat="identity",position = "dodge") +
-  theme_bw() +
-  theme(text = element_text(size = base * expand / 2, face = "bold"),
-        legend.position = "none") +
-  geom_errorbar(aes(ymin=YMin,ymax=YMax),size = 0.25,width= 0.025,position = "dodge") +  
-  labs(fill = "Prime type") +
-  ylab("Mean population\nconsensus estimate") +
-  xlab("Prompt type") +
-  scale_x_discrete(labels=c("1000_control" = "Control", "1000_days" = "'Days'",
-                            "1000_gender" = "Gender")) +
-  ggtitle("Consensus estimates, Solan et al's 'pollution' vignette") +
-  geom_label(aes(label = paste("n = ",n)),size = 2)
+# EXPLORATORY REGRESSION ANALYSIS - DOES FCB DEPEND ON JUDGMENT PROVIDED BY PARTICIPANT?
 
-ggsave("pilot_results_pollution.pdf", width = 6, height = 3, units = "in")
+options(mc.cores = parallel::detectCores())
+model <- brm(difference ~ individual_judgment + # individual_judgment: 'yes', 'no', 'can't decide' (reference level)
+               (1|workerid) + (individual_judgment|title), 
+             data = transformed %>% filter(version == "controversial"))
+summary(model)
 
-m <- brm(population_judgment ~ actual + (individual_judgment|item), data = transformed,
-         control = list(adapt_delta = 0.9))
+### **Auxilliary visualizations:**
+  
+d %>% filter(!(version %in% c("unambiguous_uncovered", "unambiguous_covered"))) %>%
+  mutate(confidence = factor(confidence)) %>%
+  mutate(confidence = plyr::revalue(confidence, c('0' = "Not at all confident", 
+                                                  '1'  = "Slightly confident", 
+                                                  '2'  = "Moderately confident",
+                                                  '3' = "Very confident",
+                                                  '4' = "Totally confident"))) %>%
+  ggplot(aes(x = confidence)) +
+  geom_bar(stat="count", width=0.7, fill="steelblue")+
+  theme_minimal() +
+  xlab("Confidence in answer") +
+  ylab("Count") + 
+  ggtitle("Answer confidence (excluding controls)")
 
-summary(m)
-
-hypothesis(m, "actual > 0")
