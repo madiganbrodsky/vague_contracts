@@ -87,6 +87,9 @@ function make_slides(f) {
       $("#error_num").hide();
       $("#error_percept").hide();
       this.log_responses();
+      $('input:radio[name="individual_judgment"]:checked')[0].checked = false;      
+      document.getElementById('population_judgment').value = '';
+      document.getElementById('confidence').value = -1;
       _stream.apply(this);
     }
   },
@@ -95,7 +98,7 @@ function make_slides(f) {
 
       exp.data_trials.push({
           "individual_judgment" : this.individual_judgment,
-          "population_judgment" : this.population_judgment,
+          "population_judgment" : parseInt(this.population_judgment),
           "confidence" : this.confidence,
           "item" : this.item,
           "title" : this.title,
