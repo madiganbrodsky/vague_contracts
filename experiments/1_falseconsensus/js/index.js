@@ -150,7 +150,7 @@ slides.subj_info =  slide({
           "time_in_minutes" : (Date.now() - exp.startT)/60000,
           "participant_id" : exp.participant_id
       };
-      setTimeout(function() {turk.submit(exp.data);}, 1000);
+      proliferate.submit(exp.data);
     }
   });
 
