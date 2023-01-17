@@ -109,6 +109,7 @@ function make_slides(f) {
           "slide_number_in_experiment" : exp.phase,
           "response_accent": exp.sliderPost_accent,
           "response_understand": exp.sliderPost_understand,
+          "dispute" : exp.dispute
         });
     }
 
@@ -173,19 +174,23 @@ function init() {
 
   exp.data_trials = [];
 
-  unambiguous_covered_stim = _.sample(_.filter(stimuli, function(stim) {
+  exp.dispute = _.sample([true,false])
+
+  var stimuliset = exp.dispute ? stimuli : stimuli_nodispute
+
+  unambiguous_covered_stim = _.sample(_.filter(stimuliset, function(stim) {
     return stim.version == "unambiguous_covered"
   }))
 
-  unambiguous_uncovered_stim = _.sample(_.filter(stimuli, function(stim) {
-    return stim.version == "unambiguous_uncovered" && stim.Title != unambiguous_covered_stim.Title
+  unambiguous_uncovered_stim = _.sample(_.filter(stimuliset, function(stim) {
+    return stim.version == "unambiguous_uncovered" && stim.item != unambiguous_covered_stim.item
   }))
 
-  controversial_stim = _.sample(_.filter(stimuli, function(stim) {
-    return stim.version == "controversial" && stim.Title != unambiguous_covered_stim.Title && stim.Title != unambiguous_uncovered_stim.Title
+  controversial_stim = _.sample(_.filter(stimuliset, function(stim) {
+    return stim.version == "controversial" && stim.item != unambiguous_covered_stim.item && stim.item != unambiguous_uncovered_stim.item
   }))
 
-  stims = demoMode ? stimuli : _.shuffle([unambiguous_covered_stim, unambiguous_uncovered_stim, controversial_stim])
+  stims = demoMode ? stimuliset : _.shuffle([unambiguous_covered_stim, unambiguous_uncovered_stim, controversial_stim])
 
   exp.all_stims = stims;
 
