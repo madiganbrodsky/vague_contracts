@@ -51,7 +51,7 @@ function make_slides(f) {
       this.title = stim.Title;
 
       $("#vignette").html(this.header + "<p>" + this.continuation);
-      $("#question").html('<i>1. Do you think that the damage that occured is covered under ' + this.item + ' as it appears in the policy?</i>');
+      $("#question").html('<i>1. Do you think that the claim is covered under ' + this.item + ' as it appears in the policy?</i>');
       $("#error_percept").hide();
       $("#error_num").hide();
       if(!demoMode) {
