@@ -58,11 +58,6 @@ transformed %>%
   summarise(nYes = sum(yes), nNo =sum(no), nCantDecide = sum(cantdecide),
     propYes = sum(yes)/n(), propNo = sum(no)/n(), propCantDecide = sum(cantdecide)/n())
 
-# transformed %>% 
-#   filter(title == "Wind Damage" & version == "controversial") %>%
-#   group_by(individual_judgment) %>%
-#   summarise(meanjudgment = mean(population_judgment)) 
-
 # PLOT (HISTOGRAM OF DIFFERENCES BETWEEN POPULATION ESTIMATE AND TRUE PROPORTION)
 
 transformed %>%
@@ -79,6 +74,9 @@ transformed %>%
 ggsave("viz/errorHist.pdf", width = 3, height = 3, units = "in")
 
 # PLOT (BY-ITEM, BY-CONDITION)
+
+# NOTE: THIS TAKES A SUPER LONG TIME TO RENDER ON THE WHOLE DATASET...
+# RUN AT YOUR OWN RISK
 
 transformed %>% 
   ggplot(aes(x = individual_judgment, y = as.numeric(population_judgment))) +
