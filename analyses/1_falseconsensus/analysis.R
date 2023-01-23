@@ -7,19 +7,27 @@ library(EnvStats)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-d <- read_csv("../../results/1_falseconsensus/demo-merged.csv")
+d <- read_csv("../../proliferate/1_falseconsensus/main-merged.csv")
+
+# NATIVE LANGUAGE EXCLUSIONS
+
+nonEnglishNativeLanguages <- c("Chinese", "Spanish", "spanish", "Punjabi", "Filipino", "Urdu")
+
+excludedWorkers_nonNative <- unique((d %>%
+  filter(subject_information.language %in% nonEnglishNativeLanguages))$workerid)
 
 # EXCLUSIONS
 
 excludedWorkers <- (d %>%
                       filter((version == "unambiguous_uncovered" & individual_judgment == "yes") |
-                               (version == "unambgiuous_covered" & individual_judgment == "no")) %>%
+                               (version == "unambiguous_covered" & individual_judgment == "no")) %>%
                       group_by(workerid) %>%
                       summarise(n = n()) %>%
                       filter(n > 1))$workerid
 
 d <- d %>% 
-  filter(!(workerid %in% excludedWorkers))
+  filter(!(workerid %in% excludedWorkers)) %>%
+  filter(!(workerid %in% excludedWorkers_nonNative))
 
 # DATA TRANSFORMATIONS
 
@@ -33,7 +41,42 @@ transformed <- d %>%
   mutate(true_proportion = binom.confint(x = count, n  = total, methods = "exact")$mean * 100, 
          ci_low = binom.confint(x = count, n  = total, methods = "exact")$lower * 100,
          ci_high = binom.confint(x = count, n  = total, methods = "exact")$upper * 100) %>%
-  mutate(difference = as.numeric(population_judgment) - true_proportion)
+  mutate(difference = as.numeric(population_judgment) - true_proportion) %>%
+  mutate(versionPretty = factor(version))
+
+levels(transformed$versionPretty)
+levels(transformed$versionPretty) <- c("Controversial", "Covered", "Not\ncovered")
+
+transformed %>%
+  group_by(version) %>%
+  mutate(yes = case_when(individual_judgment == "yes" ~ 1,
+                                      TRUE ~ 0),
+            no = case_when(individual_judgment == "no" ~ 1,
+                            TRUE ~ 0),
+            cantdecide = case_when(individual_judgment == "cantdecide" ~ 1,
+                                    TRUE ~ 0)) %>%
+  summarise(nYes = sum(yes), nNo =sum(no), nCantDecide = sum(cantdecide),
+    propYes = sum(yes)/n(), propNo = sum(no)/n(), propCantDecide = sum(cantdecide)/n())
+
+# transformed %>% 
+#   filter(title == "Wind Damage" & version == "controversial") %>%
+#   group_by(individual_judgment) %>%
+#   summarise(meanjudgment = mean(population_judgment)) 
+
+# PLOT (HISTOGRAM OF DIFFERENCES BETWEEN POPULATION ESTIMATE AND TRUE PROPORTION)
+
+transformed %>%
+  ggplot(aes(x = difference, fill = versionPretty)) +
+  geom_histogram(position="identity", alpha = 0.3) +
+  xlab("Participant error") +
+  ylab("Count") +
+  labs(fill='Condition') +
+  theme_bw() +
+  theme(legend.position = "top",
+        text = element_text(size=8)) + 
+  guides(fill=guide_legend(nrow=1,byrow=TRUE))
+
+ggsave("viz/errorHist.pdf", width = 3, height = 3, units = "in")
 
 # PLOT (BY-ITEM, BY-CONDITION)
 
@@ -65,28 +108,3 @@ transformed %>%
 fisherTest <- oneSamplePermutationTest((transformed %>% filter(version == "controversial"))$difference, 
                                        alternative = "greater", mu = 0, exact = FALSE, 
                          n.permutations = 10000, seed = NULL)
-
-# EXPLORATORY REGRESSION ANALYSIS - DOES FCB DEPEND ON JUDGMENT PROVIDED BY PARTICIPANT?
-
-options(mc.cores = parallel::detectCores())
-model <- brm(difference ~ individual_judgment + # individual_judgment: 'yes', 'no', 'can't decide' (reference level)
-               (1|workerid) + (individual_judgment|title), 
-             data = transformed %>% filter(version == "controversial"))
-summary(model)
-
-### **Auxilliary visualizations:**
-  
-d %>% filter(!(version %in% c("unambiguous_uncovered", "unambiguous_covered"))) %>%
-  mutate(confidence = factor(confidence)) %>%
-  mutate(confidence = plyr::revalue(confidence, c('0' = "Not at all confident", 
-                                                  '1'  = "Slightly confident", 
-                                                  '2'  = "Moderately confident",
-                                                  '3' = "Very confident",
-                                                  '4' = "Totally confident"))) %>%
-  ggplot(aes(x = confidence)) +
-  geom_bar(stat="count", width=0.7, fill="steelblue")+
-  theme_minimal() +
-  xlab("Confidence in answer") +
-  ylab("Count") + 
-  ggtitle("Answer confidence (excluding controls)")
-
