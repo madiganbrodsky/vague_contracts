@@ -7,7 +7,12 @@ library(EnvStats)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
+theme_set(theme_bw())
+cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
 d <- read_csv("../../results/1_falseconsensus/main-merged.csv")
+source("../helpers.R")
+
 
 # NATIVE LANGUAGE EXCLUSIONS
 
@@ -106,3 +111,76 @@ transformed %>%
 fisherTest <- oneSamplePermutationTest((transformed %>% filter(version == "controversial"))$difference, 
                                        alternative = "greater", mu = 0, exact = FALSE, 
                          n.permutations = 10000, seed = NULL)
+
+# 
+props = transformed %>% 
+  mutate(Yes = case_when(individual_judgment == "yes" ~ 1,
+                         TRUE ~ 0),
+         No = case_when(individual_judgment == "no" ~ 1,
+                        TRUE ~ 0),
+         CantDecide = case_when(individual_judgment == "cantdecide" ~ 1,
+                                  TRUE ~ 0)) %>% 
+  group_by(version) %>% 
+  summarise(ProportionYes = mean(Yes), YesCILow=ci.low(Yes), YesCIHigh=ci.high(Yes),
+            ProportionNo = mean(No), NoCILow=ci.low(No), NoCIHigh=ci.high(No),
+            ProportionCantDecide = mean(CantDecide), CantDecideCILow=ci.low(CantDecide), CantDecideCIHigh=ci.high(CantDecide)) %>% 
+  ungroup() %>% 
+  mutate(YesYMin=ProportionYes-YesCILow,YesYMax=ProportionYes+YesCIHigh,
+         NoYMin=ProportionNo-NoCILow,NoYMax=ProportionNo+NoCIHigh,
+         CantDecideYMin=ProportionCantDecide-CantDecideCILow,CantDecideYMax=ProportionCantDecide+CantDecideCIHigh)
+
+yes = props %>% 
+  select(version,ProportionYes,YesYMax,YesYMin) %>% 
+  rename(Proportion=ProportionYes,YMax=YesYMax,YMin=YesYMin) %>% 
+  mutate(Response="yes",ResponseType="individual")
+
+no = props %>% 
+  select(version,ProportionNo,NoYMax,NoYMin) %>% 
+  rename(Proportion=ProportionNo,YMax=NoYMax,YMin=NoYMin) %>% 
+  mutate(Response="no",ResponseType="individual")
+
+cantdecide = props %>% 
+  select(version,ProportionCantDecide,CantDecideYMax,CantDecideYMin) %>% 
+  rename(Proportion=ProportionCantDecide,YMax=CantDecideYMax,YMin=CantDecideYMin) %>% 
+  mutate(Response="cantdecide",ResponseType="individual")
+
+pop_judgments = transformed %>% 
+  group_by(version,individual_judgment) %>% 
+  summarise(Proportion = mean(population_judgment/100), CILow=ci.low(population_judgment/100), CIHigh=ci.high(population_judgment/100)) %>% 
+  ungroup() %>% 
+  mutate(Response=individual_judgment,ResponseType="agreement_estimate", YMin=Proportion-CILow,YMax=Proportion+CIHigh) %>% 
+  select(-individual_judgment)
+
+responses = bind_rows(yes,no,cantdecide,pop_judgments) %>% 
+  mutate(Condition = fct_relevel(version,"unambiguous_covered","controversial"),
+         ResponseType = fct_relevel(ResponseType,"individual")) 
+
+dodge=position_dodge(.9)
+
+ggplot(responses, aes(x=Condition,y=Proportion,fill=Response,alpha=ResponseType)) +
+  geom_bar(stat="identity",position=dodge) +
+  geom_errorbar(aes(ymin=YMin,ymax=YMax),width=.2,position=dodge) +
+  scale_fill_manual(values=cbPalette) +
+  scale_alpha_discrete(range = c(1, .4)) +
+  ylab("Proportion of responses")
+
+names(transformed)
+nrow(transformed)
+
+# plot just histograms of "yes" response proportions
+unique(transformed[,c("true_proportion","title","version","individual_judgment")]) %>% 
+  filter(individual_judgment=="yes") %>% 
+  # droplevels() %>% 
+  # mutate(Condition = fct_relevel(as.factor(version),"unambiguous_covered","controversial")) %>% 
+  ggplot(aes(x=true_proportion)) +
+  geom_histogram() +
+  # geom_density() +
+  facet_wrap(~version)
+
+# plot proportions of "yes" responses by condition and item
+unique(transformed[,c("true_proportion","title","version","individual_judgment")]) %>% 
+  filter(individual_judgment=="yes") %>% 
+  ggplot(aes(x=version,y=true_proportion)) +
+  geom_point() +
+  geom_line(aes(group=1)) +
+  facet_wrap(~title)
