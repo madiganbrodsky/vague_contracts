@@ -7,7 +7,7 @@ library(EnvStats)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-d <- read_csv("../../proliferate/1_falseconsensus/main-merged.csv")
+d <- read_csv("../../results/1_falseconsensus/main-merged.csv")
 
 # NATIVE LANGUAGE EXCLUSIONS
 
