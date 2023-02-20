@@ -263,3 +263,4 @@ as_tibble(d_yes_byitem) %>%
   facet_wrap(~title,labeller = labeller(title = label_wrap_gen(width = 20))) +
   theme(legend.position = c(0.8, 0.05),legend.direction="horizontal")
 ggsave("graphs/prop_yes_byitem.pdf",width=12,height=10)
+
