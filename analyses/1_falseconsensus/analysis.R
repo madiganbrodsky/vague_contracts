@@ -59,9 +59,33 @@ transformed <- d %>%
   mutate(difference = as.numeric(population_judgment) - true_proportion) %>%
   mutate(versionPretty = factor(version))
   
-
 levels(transformed$versionPretty)
 levels(transformed$versionPretty) <- c("Controversial", "Covered", "Not\ncovered")
+
+# DATA TRANSFORMATIONS FOR GPT-3 FINETUNING
+
+proportionsByItem <- transformed %>%
+  group_by(title,version) %>%
+  mutate(yes = case_when(individual_judgment == "yes" ~ 1,
+                         TRUE ~ 0),
+         no = case_when(individual_judgment == "no" ~ 1,
+                        TRUE ~ 0),
+         cantdecide = case_when(individual_judgment == "cantdecide" ~ 1,
+                                TRUE ~ 0)) %>%
+  summarise(nYes = sum(yes), nNo =sum(no), nCantDecide = sum(cantdecide),
+            propYes = sum(yes)/n(), propNo = sum(no)/n(), propCantDecide = sum(cantdecide)/n())
+
+fineTuneDataSet <- proportionsByItem %>%
+  inner_join(unique(d %>% select(item,title,version,header,continuation))) # %>%
+  # mutate(discreteLabel = case_when(propYes > .8 ~ "consensus_covered",
+  #                                  propYes > .6 ~ "leans_covered",
+  #                                  propYes > .4 ~ "no_consensus",
+  #                                  propYes > .2 ~ "leans_not_covered",
+  #                                  TRUE ~ "consensus_not_covered"))
+
+# table(fineTuneDataSet$discreteLabel)
+
+write_csv(fineTuneDataSet, "../../results/1_falseconsensus/fineTuneDataSet.csv")
 
 # how many of each type of item
 items = unique(transformed[,c("locus_of_uncertainty_location","title")])
@@ -93,41 +117,63 @@ transformed %>%
         text = element_text(size=8)) + 
   guides(fill=guide_legend(nrow=1,byrow=TRUE))
 
-ggsave("viz/errorHist.pdf", width = 3, height = 3, units = "in")
+ggsave("graphs/errorHist.pdf", width = 3, height = 3, units = "in")
 
 # PLOT (BY-ITEM, BY-CONDITION)
 
 # NOTE: THIS TAKES A SUPER LONG TIME TO RENDER ON THE WHOLE DATASET...
 # RUN AT YOUR OWN RISK
 
-transformed %>% 
-  ggplot(aes(x = individual_judgment, y = as.numeric(population_judgment))) +
-  facet_wrap(version ~ title) +
-  geom_point(alpha = 0.5, show.legend = FALSE, aes(colour = individual_judgment),
-             position = position_nudge(x = +0.1)) +
-  theme_bw() +
-  stat_summary(fun.data = mean_cl_boot, geom = "errorbar", width = 0.1, colour = "red",
-               position = position_nudge(x = +0.1)) + 
-  stat_summary(fun = mean, shape = 18, size = 1, geom = "point", colour = "red",
-               position = position_nudge(x = +0.1)) +
-  stat_summary(fun=mean, geom="label", aes(label = round(..y..,2), hjust = -0.25),
-               position = position_nudge(x = +0.1)) +
-  geom_errorbar(aes(ymin=ci_low, ymax=ci_high),
-                width=.1,                    # Width of the error bars
-                position=position_nudge(-0.1)) +
-  geom_point(aes(y = true_proportion), shape = 18, size = 3, 
-             position = position_nudge(-0.1)) +
-  geom_text(aes(y = true_proportion, label = round(true_proportion, digits = 2)),
-            position=position_nudge(-0.25)) +
-  ylab("Distribution of responses (and estimates), %") +
-  xlab("Individual judgment") +
-  ggtitle("Comparing real vs. estimated consensus")
+# transformed %>% 
+#   ggplot(aes(x = individual_judgment, y = as.numeric(population_judgment))) +
+#   facet_wrap(version ~ title) +
+#   geom_point(alpha = 0.5, show.legend = FALSE, aes(colour = individual_judgment),
+#              position = position_nudge(x = +0.1)) +
+#   theme_bw() +
+#   stat_summary(fun.data = mean_cl_boot, geom = "errorbar", width = 0.1, colour = "red",
+#                position = position_nudge(x = +0.1)) + 
+#   stat_summary(fun = mean, shape = 18, size = 1, geom = "point", colour = "red",
+#                position = position_nudge(x = +0.1)) +
+#   stat_summary(fun=mean, geom="label", aes(label = round(..y..,2), hjust = -0.25),
+#                position = position_nudge(x = +0.1)) +
+#   geom_errorbar(aes(ymin=ci_low, ymax=ci_high),
+#                 width=.1,                    # Width of the error bars
+#                 position=position_nudge(-0.1)) +
+#   geom_point(aes(y = true_proportion), shape = 18, size = 3, 
+#              position = position_nudge(-0.1)) +
+#   geom_text(aes(y = true_proportion, label = round(true_proportion, digits = 2)),
+#             position=position_nudge(-0.25)) +
+#   ylab("Distribution of responses (and estimates), %") +
+#   xlab("Individual judgment") +
+#   ggtitle("Comparing real vs. estimated consensus")
 
 # FISHER ONE-SAMPLE TEST TO DETERMINE WHETHER (SUBJECTIVE JUDGMENT) - (TRUE PROPORTION) > 0
 
 fisherTest <- oneSamplePermutationTest((transformed %>% filter(version == "controversial"))$difference, 
                                        alternative = "greater", mu = 0, exact = FALSE, 
                          n.permutations = 10000, seed = NULL)
+
+mean = mean((transformed %>% filter(version == "controversial"))$difference)
+ciLow = mean - ci.low((transformed %>% filter(version == "controversial"))$difference)
+ciHigh = mean + ci.high((transformed %>% filter(version == "controversial"))$difference)
+
+# POST-HOC REGRESSION ANALYSIS REPORTED IN COGSCI PAPER
+
+transformed_postHocRegression <- transformed %>%
+  filter(version %in% c("unambiguous_covered", "unambiguous_uncovered")) %>%
+  mutate(majorityResponse = case_when(version == "unambiguous_covered" & individual_judgment == "yes" ~ TRUE,
+                                      version == "unambiguous_uncovered" & individual_judgment == "no" ~ TRUE,
+                                      TRUE ~ FALSE))
+
+table(transformed_postHocRegression$majorityResponse)
+
+options(mc.cores = parallel::detectCores())
+#options(mc.cores = 1)
+
+m <- brm(majorityResponse ~ version + (1|workerid) + (version|title),
+         family = bernoulli(link = "logit"), data = transformed_postHocRegression)
+
+summary(m)
 
 # bar plot of response proportions alongside agreement estimates
 props = transformed %>% 
@@ -175,38 +221,44 @@ responses = bind_rows(yes,no,cantdecide,pop_judgments) %>%
 
 dodge=position_dodge(.9)
 
+levels(responses$ResponseType) <- c("Individual","Agreement estimate")
+
 ggplot(responses, aes(x=Response,y=Proportion,fill=Condition,alpha=ResponseType)) +
   geom_bar(stat="identity",position=dodge) +
   geom_errorbar(aes(ymin=YMin,ymax=YMax),width=.2,position=dodge) +
-  scale_fill_manual(values=cbPalette,labels=c("unambiguous_covered"="covered","unambiguous_uncovered"="not covered")) + #labels=c("cantdecide"="can't\ndecide")) +
+  scale_fill_manual(values=cbPalette,labels=c("unambiguous_covered"="Covered","unambiguous_uncovered"="Not covered", "controversial" = "Controversial")) + #labels=c("cantdecide"="can't\ndecide")) +
   scale_alpha_discrete(range = c(1, .4),name="Response type",labels=c("agreement_estimate"="agreement\nestimate")) +
   ylab("Proportion of responses") +
-  scale_x_discrete(labels=c("cantdecide"="can't\ndecide")) +
-  theme(legend.position="top",legend.direction="vertical")
+  scale_x_discrete(labels=c("cantdecide"="Can't\nDecide","yes"="Yes","no"="No")) +
+  theme(legend.position="top",legend.direction="vertical",
+        text=element_text(size=14))
 ggsave("graphs/responses.pdf",width=5,height=3.5)
 
 names(transformed)
 nrow(transformed)
 
-
 # plot agreement against response proportions
 perfect_estimates = data.frame(x=c(0,.5,1),y=c(1,.5,1))
 
 d_item_responses = as_tibble(unique(transformed[,c("true_proportion","agreement_mean","individual_judgment","title","version")])) %>% 
-  mutate(Condition=fct_relevel(version,"unambiguous_covered"))
+  mutate(Condition=fct_relevel(version,"unambiguous_covered"),
+         individual_judgment = factor(individual_judgment))
+levels(d_item_responses$individual_judgment) <- c("cantdecide","No","Yes")
 ggplot(d_item_responses %>% filter(individual_judgment!="cantdecide")) +
   geom_point(aes(x=true_proportion/100,y=agreement_mean/100,color=Condition)) +
   geom_smooth(aes(x=true_proportion/100,y=agreement_mean/100,color=Condition)) +
   # geom_point(data=perfect_estimates, aes(x=x,y=y)) +
   # geom_line(data=perfect_estimates, aes(x=x,y=y,group=1),linetype="dashed") +
   geom_abline(intercept=0,slope=1,linetype="dashed") +
-  scale_color_manual(values=cbPalette,name="Condition",labels=c("unambiguous_covered"="covered","unambiguous_uncovered"="not covered")) +
+  scale_color_manual(values=cbPalette,name="Condition",labels=c("unambiguous_covered"="Covered","unambiguous_uncovered"="Not covered", "controversial" = "Controversial")) +
   xlim(0,1) +
   ylim(0,1) +
   xlab("Proportion of response") +
   ylab("Mean agreement estimate") +
-  facet_wrap(~individual_judgment)
-ggsave("graphs/props_vs_agreement.pdf",width=7,height=3)
+  facet_wrap(~individual_judgment) +
+  theme(text=element_text(size=15),
+        legend.position = "bottom")
+ggsave("graphs/props_vs_agreement.pdf",width=7.5,height=4)
 
 # plot just histograms of "yes" response proportions
 d_yes_props = unique(transformed[,c("true_proportion","title","version","individual_judgment")]) %>% 
