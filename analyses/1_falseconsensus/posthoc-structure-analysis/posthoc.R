@@ -132,7 +132,7 @@ ggplot(transformed_meanError, aes(x=version, y = meanError, fill = SentenceType)
   ylab("Difference in Individual\nObservation and Population Judgements") +
   # xlab("Condition") +
   theme(legend.position="top")
-ggsave("graphs/sentencetypeerror_byresponse.pdf",width=5,height=3.5)
+ggsave("graphs/sentencetypeerror.pdf",width=5,height=3.5)
 
 d_yes_byitem = unique(transformed[,c("true_proportion","ci_low","ci_high","title","version","individual_judgment","SentenceType")]) %>% 
   filter(individual_judgment=="yes") %>% 
