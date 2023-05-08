@@ -255,7 +255,31 @@ ggplot(d_item_responses %>% filter(individual_judgment!="cantdecide")) +
   ylim(0,1) +
   xlab("Proportion of response") +
   ylab("Mean agreement estimate") +
-  facet_wrap(~individual_judgment) +
+  facet_wrap(~individual_judgment) + #facet by version 
+  theme(text=element_text(size=15),
+        legend.position = "bottom")
+ggsave("graphs/props_vs_agreement.pdf",width=7.5,height=4)
+
+#update post hoc graph 
+
+perfect_estimates = data.frame(x=c(0,.5,1),y=c(1,.5,1))
+
+d_item_responses = as_tibble(unique(transformed[,c("true_proportion","agreement_mean","individual_judgment","title","version")])) %>% 
+  mutate(Condition=fct_relevel(version,"unambiguous_covered"),
+         individual_judgment = factor(individual_judgment))
+levels(d_item_responses$individual_judgment) <- c("cantdecide","No","Yes")
+ggplot(d_item_responses %>% filter(individual_judgment!="cantdecide")) +
+  geom_point(aes(x=true_proportion/100,y=agreement_mean/100,color=individual_judgment)) +
+  geom_smooth(aes(x=true_proportion/100,y=agreement_mean/100,color=individual_judgment)) +
+  # geom_point(data=perfect_estimates, aes(x=x,y=y)) +
+  # geom_line(data=perfect_estimates, aes(x=x,y=y,group=1),linetype="dashed") +
+  geom_abline(intercept=0,slope=1,linetype="dashed") +
+#  scale_color_manual(values=cbPalette,name="Individual Judgement",labels=c("unambiguous_covered"="Covered","unambiguous_uncovered"="Not covered", "controversial" = "Controversial")) +
+  xlim(0,1) +
+  ylim(0,1) +
+  xlab("Proportion of response") +
+  ylab("Mean agreement estimate") +
+  facet_wrap(~Condition) + #facet by version 
   theme(text=element_text(size=15),
         legend.position = "bottom")
 ggsave("graphs/props_vs_agreement.pdf",width=7.5,height=4)

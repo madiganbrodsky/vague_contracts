@@ -78,15 +78,19 @@ new <- transformed %>%
          cantdecide = case_when(individual_judgment == "cantdecide" ~ 1,
                                 TRUE ~ 0)) %>%
   summarise(nYes = sum(yes), nNo =sum(no), nCantDecide = sum(cantdecide), 
-            propYes = sum(yes)/n(), propNo = sum(no)/n(), propCantDecide = sum(cantdecide)/n(), meanError = mean(difference), ) %>%
+            propYes = sum(yes)/n(), propNo = sum(no)/n(), propCantDecide = sum(cantdecide)/n(), meanError = mean(difference)) %>%
   as.data.frame() %>%  
   arrange(propYes) %>% 
-  mutate(title = replace(title, title == 'Goods Carrying Vehicle: Loss or Damage to Vehicle', 'Goods Carrying Vehicle'))
+  mutate(title = replace(title, title == 'Goods Carrying Vehicle: Loss or Damage to Vehicle', 'Goods Carrying Vehicle')) %>% 
+  filter(grepl('Escape of Oil II|Vehicle Glass II|Emergency Damages I|Malicious Acts or Vandalism II|Ground Heave I|Storm Damage|Vehicle Fire III|House Removal I|General Damages|Escape of Water I|Trace and Access I', title)) #REMOVE THIS FILTER TO SEE PLOT OF ALL ITEMS!!!
+
 
 #Turn your 'title' column into a character vector
 new$title <- as.character(new$title)
 #Then turn it back into a factor with the levels in the correct order
 new$title <- factor(new$title, levels=unique(new$title))
+
+
 #################################################################################################
 
 #PLOT #1: BY-ITEM / PROP YES FOR CONTROVERSIAL STIMS 
@@ -103,14 +107,12 @@ ggplot(data = new,
         plot.title = element_text(hjust = 0.5)) + 
   ggtitle("Proportion of Yes Responses for Controversial Items") 
 
+
 #PLOT #2: PROP YES / ERROR FOR CONTROVERSIAL STIMS 
 
 ggplot(data = new, 
        mapping = aes(x = propYes, 
                      y = meanError)) +
-  geom_smooth(method = 'lm',
-              formula = y ~ x,
-              color = "darkmagenta") +
   geom_point(alpha = 0.8,
              color = 'darkmagenta') +
   # geom_jitter(alpha = 0.8, 
