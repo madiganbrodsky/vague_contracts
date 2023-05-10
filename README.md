@@ -6,7 +6,7 @@ This repository that accompanies the following paper:
 
 The directory `experiments` contains the experimental files used to run the experiment. 
 
-The directory `results` contains the (anonymized) data from the experiment and the data from the LLM portion of the paper. 
+The directory `data` contains the (anonymized) data from the experiment and the data from the LLM portion of the paper. 
 
 The directory `analyses` contains the R scripts used for analysis and visualization for both the human and LLM portion of the paper. 
 
