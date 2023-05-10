@@ -4,6 +4,7 @@ library(Hmisc)
 library(binom)
 library(brms)
 library(EnvStats)
+library(lme4)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
@@ -275,7 +276,7 @@ ggplot(d_item_responses %>% filter(individual_judgment!="cantdecide")) +
   # geom_point(data=perfect_estimates, aes(x=x,y=y)) +
   # geom_line(data=perfect_estimates, aes(x=x,y=y,group=1),linetype="dashed") +
   geom_abline(intercept=0,slope=1,linetype="dashed") +
-  scale_color_manual(values=cbPalette[7:8],name="Individual judgment type") +
+  scale_color_manual(values=c(cbPalette[4],cbPalette[8]),name="Individual judgment type") +
   xlim(0,1) +
   ylim(0,1) +
   xlab("Proportion of judgment") +
@@ -283,12 +284,40 @@ ggplot(d_item_responses %>% filter(individual_judgment!="cantdecide")) +
   facet_wrap(~Condition) + #facet by version 
   theme(text=element_text(size=15),
         legend.position = "bottom")
-ggsave("graphs/props_vs_agreement_bycondition.pdf",width=7.5,height=3.5)
+ggsave("graphs/props_vs_agreement_bycondition.pdf",width=7,height=3.5)
+
+ggplot(d_item_responses %>% filter(individual_judgment!="cantdecide")) +
+  geom_point(aes(x=true_proportion/100,y=agreement_mean/100,color=individual_judgment)) +
+  geom_smooth(method="lm",aes(x=true_proportion/100,y=agreement_mean/100,color=individual_judgment)) +
+  # geom_point(data=perfect_estimates, aes(x=x,y=y)) +
+  # geom_line(data=perfect_estimates, aes(x=x,y=y,group=1),linetype="dashed") +
+  geom_abline(intercept=0,slope=1,linetype="dashed") +
+  geom_vline(xintercept=.82,linetype="dashed",color=cbPalette[6]) +
+  geom_vline(xintercept=.5,linetype="dashed",color="blue") +
+  geom_vline(xintercept=.72,linetype="dashed",color=cbPalette[4]) +
+  scale_color_manual(values=c(cbPalette[4],cbPalette[8]),name="Individual judgment type") +
+  xlim(0,1) +
+  ylim(0,1) +
+  xlab("Proportion of judgment") +
+  ylab("Mean agreement estimate") +
+  # facet_wrap(~Condition) + #facet by version 
+  theme(text=element_text(size=15),
+        legend.position = "bottom")
+ggsave("graphs/props_vs_agreement_bycondition_collapsed.pdf",width=4,height=3.5)
 
 # plot just histograms of "yes" response proportions
 d_yes_props = unique(transformed[,c("true_proportion","title","version","individual_judgment")]) %>% 
   filter(individual_judgment=="yes") %>% 
   droplevels()
+
+yesno = d_item_responses %>% 
+  filter(individual_judgment != "cantdecide") %>% 
+  droplevels() %>% 
+  mutate(cindividual_judgment = as.numeric(as.factor(individual_judgment)) - mean( as.numeric(as.factor(individual_judgment))),
+         ctrue_proportion = true_proportion-mean(true_proportion))
+
+m = brm(agreement_mean ~ ctrue_proportion*cindividual_judgment+ (1|title), data=yesno,family="gaussian")
+summary(m)
 
 as_tibble(d_yes_props) %>% 
   mutate(Condition = fct_relevel(as.factor(version),"unambiguous_covered","controversial")) %>% 
