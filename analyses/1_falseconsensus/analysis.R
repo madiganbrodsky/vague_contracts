@@ -14,7 +14,7 @@ cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00",
 source("../helpers.R")
 
 # load core dataset
-d <- read_csv("../../results/1_falseconsensus/main-merged.csv")
+d <- read_csv("../../data/1_falseconsensus/main-merged.csv")
 
 # load extra information
 metadata = read_csv("../../experiments/1_falseconsensus/main/stimuli.csv") %>% 
@@ -86,7 +86,7 @@ fineTuneDataSet <- proportionsByItem %>%
 
 # table(fineTuneDataSet$discreteLabel)
 
-write_csv(fineTuneDataSet, "../../results/1_falseconsensus/fineTuneDataSet.csv")
+write_csv(fineTuneDataSet, "../../data/1_falseconsensus/fineTuneDataSet.csv")
 
 # how many of each type of item
 items = unique(transformed[,c("locus_of_uncertainty_location","title")])
