@@ -8,6 +8,4 @@ The directory `experiments` contains the experimental files used to run the expe
 
 The directory `data` contains the (anonymized) data from the experiment and the data from the LLM portion of the paper. 
 
-The directory `analyses` contains the R scripts used for analysis and visualization for both the human and LLM portion of the paper. 
-
-The directory `post-hoc` contains the R scripts used for exploratory analysis and visualization of the relationship between Q1 and Q2 responses, as well as the effect of syntactic structure on responses. 
+The directory `analyses` contains the R scripts used for analysis and visualization for both the human and LLM portion of the paper, as well as post-hoc analyses. 
