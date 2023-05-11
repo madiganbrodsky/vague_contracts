@@ -22,7 +22,17 @@ metadata = read_csv("../../experiments/1_falseconsensus/main/stimuli.csv") %>%
   rename(title=Title)
 
 d = d %>% 
-  left_join(metadata,by=c("title","version"))
+  left_join(metadata,by=c("title","version")) %>%
+  mutate(title = case_when(
+    title == "Vehicle Fire II" ~ "Vehicle Fire I",
+    title == "Vehicle Fire III" ~ "Vehicle Fire II",
+    title == "Vehicle Theft IV" ~ "Vehicle Theft II",
+    title == "Vehicle Theft V" ~ "Vehicle Theft III",
+    title == "Vehicle Theft VI" ~ "Vehicle Theft IV",
+    title == "Goods Carrying Vehicle: Loss or Damage to Vehicle" ~ "Goods Carrying Vehicle",
+    TRUE ~ title)) %>%
+  mutate(item = case_when(item == "Vehicle TheftVe" ~ "Vehicle Theft",
+                          TRUE ~ item))
 
 # NATIVE LANGUAGE EXCLUSIONS
 
@@ -77,14 +87,7 @@ proportionsByItem <- transformed %>%
             propYes = sum(yes)/n(), propNo = sum(no)/n(), propCantDecide = sum(cantdecide)/n())
 
 fineTuneDataSet <- proportionsByItem %>%
-  inner_join(unique(d %>% select(item,title,version,header,continuation))) # %>%
-  # mutate(discreteLabel = case_when(propYes > .8 ~ "consensus_covered",
-  #                                  propYes > .6 ~ "leans_covered",
-  #                                  propYes > .4 ~ "no_consensus",
-  #                                  propYes > .2 ~ "leans_not_covered",
-  #                                  TRUE ~ "consensus_not_covered"))
-
-# table(fineTuneDataSet$discreteLabel)
+  inner_join(unique(d %>% select(item,title,version,header,continuation))) 
 
 write_csv(fineTuneDataSet, "../../data/1_falseconsensus/fineTuneDataSet.csv")
 
@@ -120,34 +123,6 @@ transformed %>%
 
 ggsave("graphs/errorHist.pdf", width = 3, height = 3, units = "in")
 
-# PLOT (BY-ITEM, BY-CONDITION)
-
-# NOTE: THIS TAKES A SUPER LONG TIME TO RENDER ON THE WHOLE DATASET...
-# RUN AT YOUR OWN RISK
-
-# transformed %>% 
-#   ggplot(aes(x = individual_judgment, y = as.numeric(population_judgment))) +
-#   facet_wrap(version ~ title) +
-#   geom_point(alpha = 0.5, show.legend = FALSE, aes(colour = individual_judgment),
-#              position = position_nudge(x = +0.1)) +
-#   theme_bw() +
-#   stat_summary(fun.data = mean_cl_boot, geom = "errorbar", width = 0.1, colour = "red",
-#                position = position_nudge(x = +0.1)) + 
-#   stat_summary(fun = mean, shape = 18, size = 1, geom = "point", colour = "red",
-#                position = position_nudge(x = +0.1)) +
-#   stat_summary(fun=mean, geom="label", aes(label = round(..y..,2), hjust = -0.25),
-#                position = position_nudge(x = +0.1)) +
-#   geom_errorbar(aes(ymin=ci_low, ymax=ci_high),
-#                 width=.1,                    # Width of the error bars
-#                 position=position_nudge(-0.1)) +
-#   geom_point(aes(y = true_proportion), shape = 18, size = 3, 
-#              position = position_nudge(-0.1)) +
-#   geom_text(aes(y = true_proportion, label = round(true_proportion, digits = 2)),
-#             position=position_nudge(-0.25)) +
-#   ylab("Distribution of responses (and estimates), %") +
-#   xlab("Individual judgment") +
-#   ggtitle("Comparing real vs. estimated consensus")
-
 # FISHER ONE-SAMPLE TEST TO DETERMINE WHETHER (SUBJECTIVE JUDGMENT) - (TRUE PROPORTION) > 0
 
 fisherTest <- oneSamplePermutationTest((transformed %>% filter(version == "controversial"))$difference, 
@@ -169,7 +144,6 @@ transformed_postHocRegression <- transformed %>%
 table(transformed_postHocRegression$majorityResponse)
 
 options(mc.cores = parallel::detectCores())
-#options(mc.cores = 1)
 
 m <- brm(majorityResponse ~ version + (1|workerid) + (version|title),
          family = bernoulli(link = "logit"), data = transformed_postHocRegression)

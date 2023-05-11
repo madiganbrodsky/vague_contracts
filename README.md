@@ -9,3 +9,5 @@ The directory `experiments` contains the experimental files used to run the expe
 The directory `data` contains the (anonymized) data from the experiment and the data from the LLM portion of the paper. 
 
 The directory `analyses` contains the R scripts used for analysis and visualization for both the human and LLM portion of the paper, as well as post-hoc analyses. 
+
+The directory `models` contains the Python and R scripts used to compare the predictive accuray of OpenAI's `text-davinci-003` model under zero and few-shot prompting regimes. 
