@@ -28,4 +28,5 @@ proliferate/
 *.gitattributes
 *node_modules*
 *dump.rdb
+*.ipynb_checkpoints
 .Rproj.user
